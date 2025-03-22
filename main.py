@@ -2,6 +2,7 @@ import tkinter as tk
 import random
 # from tetris_picecs import IShapePiece
 import tetris_picecs
+from settings import Settings
 
 # the Game main class 
 class Game:
@@ -16,6 +17,7 @@ class Game:
         self.level = 1
         # self.root.attributes('-fullscreen', True)
         # self.root.mainloop()
+        self.settings = Settings()
         self.gui() 
 
     def gui(self):
@@ -70,7 +72,15 @@ class Game:
         self.level_canvas.grid(row=0,column=2)
 
         self.level_canvas.bind("<Configure>", self.draw_responsive_circle)
-        
+
+
+        buttons_frame = tk.Frame()
+        buttons_frame.grid(row=2,column=2)
+
+        tk.Button(buttons_frame,text="Mute/Play Music", command=self.settings.toggle_music,font=("Arial", 16)).grid(row=1,column=0, sticky="ew")
+        tk.Button(buttons_frame,text="Exit", command=self.root.quit, font=("Arial", 16)).grid(row=2,column=0, sticky="ew")
+
+
         self.screen_frame = tk.Frame(self.root,bg= "#1D1616")
         self.screen_frame.grid_columnconfigure((0,1,2), weight=1)
         self.screen_frame.grid_rowconfigure((0,1,2), weight=1)
@@ -102,6 +112,8 @@ class Game:
             # self.game_over_frame.grid(row=1,column=1,sticky="n")
             self.screen_frame.grid(row=0,column=0,sticky="nsew", rowspan=3, columnspan=3)
             self.game_over_score_label.config(text = f"Score: {self.score} Level: {self.level}")
+
+            self.settings.stop_music()
             return 
 
         self.clear_full_rows()
@@ -229,8 +241,13 @@ class Game:
                 point.config(bg="#333")
         
         tetris_picecs.TetrisPieceInterface.all_taken_positions =[[0 for i in range(16)] for i in range(16)]
+
+        self.settings.play_music()
          
     def draw_responsive_diamond(self,event):
+
+        self.score_canvas.delete(tk.ALL)
+
         width = self.score_canvas.winfo_width()
         height = self.score_canvas.winfo_height()
 
@@ -249,6 +266,9 @@ class Game:
         self.score_canvas.create_text(cx, cy, text=self.score, font=("Arial", d//3, "bold"), fill="black", tags="score")
 
     def draw_responsive_circle(self,event):
+
+        self.level_canvas.delete(tk.ALL)
+
         width = self.level_canvas.winfo_width()
         height = self.level_canvas.winfo_height()
 
