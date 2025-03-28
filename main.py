@@ -20,8 +20,9 @@ class Game:
         # self.settings = Settings()
 
 
-        icon = tk.PhotoImage(file="assets/icons/icon.png")
-        self.root.iconphoto(True,icon)
+        # icon = tk.PhotoImage(file="assets/icons/icon.ico")
+        # self.root.iconphoto(True,icon)
+        self.root.iconbitmap("assets/icons/icon.ico")
 
         self.start_menu() 
 
