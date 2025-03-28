@@ -2,9 +2,13 @@ from pygame import mixer
 
 class Settings:
 
+
     def __init__(self):
 
         self.music_on = True
+
+        self.tetris_plus = False
+        self.tetris_mode = "NORMAL"
         mixer.init()
         self.play_music()
 
@@ -14,7 +18,7 @@ class Settings:
         if(not self.music_on):
             return
 
-        mixer.music.load("music/tetris_theme.mp3")
+        mixer.music.load("assets/music/tetris_theme.mp3")
         mixer.music.set_volume(0.05)
         mixer.music.play(-1)
 
@@ -29,3 +33,8 @@ class Settings:
         else:
             mixer.music.unpause()
             self.music_on = True
+    
+    def toggle_tetris_plus(self):
+        self.tetris_plus = not self.tetris_plus 
+
+settings = Settings()

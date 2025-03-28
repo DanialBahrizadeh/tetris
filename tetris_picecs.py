@@ -1,4 +1,5 @@
 import copy
+from settings import settings
 
 
 class TetrisPieceInterface:
@@ -10,9 +11,9 @@ class TetrisPieceInterface:
     all_taken_positions = [[0 for i in range(16)] for i in range(16)]
     def __init__(self,row:int,column:int, form = 0):
         self.position = [[row,column],
-                    [row + 1, column],
-                    [row+2, column],
-                    [row+3,column]]
+                    [row , column],
+                    [row, column],
+                    [row,column]]
         self.form = form
         self.color = TetrisPieceInterface.colors[TetrisPieceInterface.color_index]
         TetrisPieceInterface.color_index = (TetrisPieceInterface.color_index + 1) % 4
@@ -23,7 +24,13 @@ class TetrisPieceInterface:
 
     def can_it_move(self,dir="Down"):
         new_poisition = []
-        if(dir == "Down"): new_poisition = [[row+1,col] for [row,col] in self.position]
+        
+        if(dir == "Down"): 
+            if(settings.tetris_mode in ["NORMAL", "DOUBLE_TROBLE", "PHANTOM_BLOCKS","FLIP"]): 
+                new_poisition = [[row+1,col] for [row,col] in self.position]
+            elif(settings.tetris_mode == "GRAVITY_SHIFT"):
+                new_poisition = [[row-1,col] for [row,col] in self.position]
+        
 
         elif(dir == "Right"):new_poisition = [[row,col + 1] for [row,col] in self.position]
 
@@ -35,8 +42,12 @@ class TetrisPieceInterface:
         if(self.can_it_move(dir)):
 
             self.update_taken_place("TAKE")
+
             if(dir == "Down"):
-                self.position = [[row + 1, column] for [row,column] in self.position]
+                if(settings.tetris_mode in ["NORMAL", "DOUBLE_TROBLE", "PHANTOM_BLOCKS","FLIP"]):
+                    self.position = [[row + 1, column] for [row,column] in self.position]
+                if(settings.tetris_mode == "GRAVITY_SHIFT"):
+                    self.position = [[row - 1, column] for [row,column] in self.position]
             elif(dir == "Right"):
                 self.position = [[row, column + 1] for [row,column] in self.position]
             else:
@@ -87,55 +98,135 @@ class TetrisPieceInterface:
                 self.update_taken_place("PUT")
                 return
 
+    def ghost_piece(self):
+        if(settings.tetris_mode in ["NORMAL", "DOUBLE_TROBLE","FLIP"]):
+            lowest_it_can_go = []
+
+            for point in self.position:
+                counter = 0
+                for i in range(16):
+                    if(self.valiate_position([row+i,col] for [row,col] in self.position)):
+                        counter = i
+                    else:
+                        break
+                    # if(TetrisPieceInterface.all_taken_positions[point[0]+i][point[1]] == 0):
+                        # counter += 1
+                    # else:
+                        # break
+                # if counter < lowest_it_can_go:
+                    # lowest_it_can_go = counter
+                lowest_it_can_go.append(counter)
+        # print([[row+ min(lowest_it_can_go),col] for [row,col] in self.position])
+            return [[row+ min(lowest_it_can_go),col] for [row,col] in self.position]
+        elif(settings.tetris_mode == "GRAVITY_SHIFT"):
+            highest_it_can_go = []
+
+            for point in self.position:
+                counter = 0
+                for i in range(16):
+                    if(self.valiate_position([row-i,col] for [row,col] in self.position)):
+                        counter = i
+                    else:
+                        break
+                    # if(TetrisPieceInterface.all_taken_positions[point[0]+i][point[1]] == 0):
+                        # counter += 1
+                    # else:
+                        # break
+                # if counter < lowest_it_can_go:
+                    # lowest_it_can_go = counter
+                highest_it_can_go.append(counter)
+        # print([[row+ min(lowest_it_can_go),col] for [row,col] in self.position])
+            return [[row-min(highest_it_can_go),col] for [row,col] in self.position]
+        elif(settings.tetris_mode == "PHANTOM_BLOCKS" or settings.tetris_mode == "FLIP"):
+            return []
     @classmethod
     def check_game_over(cls):
         
-        if(sum(TetrisPieceInterface.all_taken_positions[0]) > 0):
+        if(sum(TetrisPieceInterface.all_taken_positions[0]) > 0 and settings.tetris_mode== "NORMAL"):
+            return True
+
+        if(sum(TetrisPieceInterface.all_taken_positions[15]) > 0 and settings.tetris_mode== "GRAVITY_SHIFT"):
             return True
 
         return False
     
+
+    @classmethod
+    def is_any_row_clear(cls):
+
+        for row in cls.all_taken_positions:
+            if(sum(row) == 16):
+                return True 
+
+        return False
+
     @classmethod    
     def clear_full_rows(cls):
         all_cleared_rows_indexes = []
-        for row_index in range(len(TetrisPieceInterface.all_taken_positions)):
+        for row_index in range(len(cls.all_taken_positions)):
 
-            if(sum(TetrisPieceInterface.all_taken_positions[row_index]) == 16):
-
+            if(sum(cls.all_taken_positions[row_index]) == 16):
                 # TetrisPieceInterface.all_taken_positions[row_index]= [0 for i in range(16)]
-                copy_positions = copy.deepcopy(TetrisPieceInterface.all_taken_positions)
-                
-                for row_index in range(1,row_index+1):
-                    for col_index in range(16):
-                        TetrisPieceInterface.all_taken_positions[row_index][col_index] =  copy_positions[row_index-1][col_index]
+                copy_positions = copy.deepcopy(cls.all_taken_positions)
+
+                if(settings.tetris_mode in ["NORMAL", "DOUBLE_TROBLE", "PHANTOM_BLOCKS","FLIP"]): 
+                    for row_index in range(1,row_index+1):
+                        for col_index in range(16):
+                            cls.all_taken_positions[row_index][col_index] =  copy_positions[row_index-1][col_index]
+                elif(settings.tetris_mode == "GRAVITY_SHIFT"):
+                    for row_index in range(row_index,15):
+                        for col_index in range(16):
+                            cls.all_taken_positions[row_index][col_index] =  copy_positions[row_index+1][col_index]
 
 
                 all_cleared_rows_indexes.append(row_index)
         return all_cleared_rows_indexes
     
-    def ghost_piece(self):
-        lowest_it_can_go = []
+    
 
-        for point in self.position:
-            counter = 0
-            for i in range(16):
-                if(self.valiate_position([row+i,col] for [row,col] in self.position)):
-                    counter = i
-                else:
-                    break
-                # if(TetrisPieceInterface.all_taken_positions[point[0]+i][point[1]] == 0):
-                    # counter += 1
-                # else:
-                    # break
-            # if counter < lowest_it_can_go:
-                # lowest_it_can_go = counter
-            lowest_it_can_go.append(counter)
-        
-        # print([[row+ min(lowest_it_can_go),col] for [row,col] in self.position])
-        return [[row+ min(lowest_it_can_go),col] for [row,col] in self.position]
+    @classmethod
+    def back_to_normal(cls):
+        if(settings.tetris_mode == "GRAVITY_SHIFT"):
+            return cls.undo_gravity_shift()
 
-        
-        
+
+    @classmethod
+    def gravity_shift(cls):
+        settings.tetris_mode = "GRAVITY_SHIFT"
+        empty_rows = 0
+        not_empty_rows = 0
+        taken_positions_copy = copy.deepcopy(cls.all_taken_positions)
+        for i in range(16):
+            if(sum(cls.all_taken_positions[i]) == 0):
+                empty_rows +=1 
+            else:
+                not_empty_rows = 16 - empty_rows
+                break
+
+        for i in range(not_empty_rows):
+            cls.all_taken_positions[i] = taken_positions_copy[empty_rows + i]
+            cls.all_taken_positions[empty_rows + i]= [0 for j in range(16)]
+
+        return empty_rows
+    
+    @classmethod
+    def undo_gravity_shift(cls):
+        settings.tetris_mode = "NORMAL"
+        empty_rows = 0
+        not_empty_rows = 0
+        taken_positions_copy = copy.deepcopy(cls.all_taken_positions)
+        for i in range(16):
+            if(sum(cls.all_taken_positions[i]) != 0):
+                not_empty_rows +=1 
+            else:
+                empty_rows = 16 - not_empty_rows
+                break
+
+        for i in range(not_empty_rows):
+            cls.all_taken_positions[empty_rows + i] = taken_positions_copy[i]
+            cls.all_taken_positions[i]= [0 for j in range(16)]
+
+        return empty_rows
             
 
 class IShapePiece(TetrisPieceInterface):
