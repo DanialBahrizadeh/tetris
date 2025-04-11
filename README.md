@@ -1,8 +1,6 @@
 # How To Run
 
-    just run the main.exe
-
-    or you could first install pygame
+    Install pygame
 
     ```bash
         pip install pygame
