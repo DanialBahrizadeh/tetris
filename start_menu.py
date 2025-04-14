@@ -9,7 +9,7 @@ class StartMenu:
         self.game_start = game_start
         self.build_root()
 
-    def build_root(self):
+    def build_root(self) -> None:
         self.root.title("Tetris")
         self.root.rowconfigure(0, weight=1)
         self.root.rowconfigure(1, weight=1)
@@ -84,6 +84,6 @@ class StartMenu:
             self.buttons_frame, text="Exit", command=self.root.quit, font=("Arial", 16)
         ).grid(row=4, column=1, sticky="ew")
 
-    def start(self):
+    def start(self) -> None:
         self.game_start()
         self.buttons_frame.destroy()

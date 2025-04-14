@@ -155,6 +155,7 @@ class Game:
         self.game_over_score_label.grid(row=2, column=3, sticky="we")
 
     def spawn(self, col=0):
+        self.del_ghost_pieces()
         # if (settings.tetris_mode == "FLIP"): return
         if self.is_it_over():
             # self.game_over_frame.grid(row=1,column=1,sticky="n")
@@ -168,9 +169,13 @@ class Game:
             settings.stop_music()
             return
 
-        self.clear_full_rows()
-        if settings.tetris_mode != "NORMAL" and time() - self.event_timer >= 5:
+        if (
+            settings.tetris_mode not in ["NORMAL", "DOUBLE_TROBLE"]
+            and time() - self.event_timer >= 5
+        ):
             self.back_to_normal()
+        self.clear_full_rows()
+
         row = 0
         if settings.tetris_mode == "GRAVITY_SHIFT":
             row = 15
@@ -212,9 +217,25 @@ class Game:
         self.last_spawned_col = col
 
     def move(self, dir="Down"):
-        self.pieces_that_can_move = [
-            piece for piece in self.pieces_that_can_move if piece.can_it_move("Down")
-        ]
+        if settings.tetris_mode != "DOUBLE_TROBLE":
+            self.pieces_that_can_move = [
+                piece
+                for piece in self.pieces_that_can_move
+                if piece.can_it_move("Down")
+            ]
+        elif (
+            len(
+                [
+                    piece
+                    for piece in self.pieces_that_can_move
+                    if piece.can_it_move("Down")
+                ]
+            )
+            == 0
+        ):
+            self.pieces_that_can_move = []
+            settings.tetris_mode = "NORMAL"
+            self.tetris_mode_label.config(text="NORMAL")
 
         if len(self.pieces_that_can_move) == 0:
             if settings.tetris_mode == "DOUBLE_TROBLE":
@@ -348,7 +369,7 @@ class Game:
 
         mode = settings.tetris_mode
 
-        if mode not in ["NORMAL"]:
+        if mode in ["FLIP", "GRAVITY_SHIFT", "PHANTOM_BLOCKS"]:
             self.back_to_normal()
 
         all_cleared_row_indexs = tetris_picecs.TetrisPieceInterface.clear_full_rows()
@@ -398,6 +419,7 @@ class Game:
             ]
 
             random.choice(events)()
+            # print(settings.tetris_mode)
             self.tetris_mode_label.config(text=settings.tetris_mode)
 
     def restart(self):
@@ -483,7 +505,13 @@ class Game:
     def check_and_inc_level(self):
         self.level = self.score // 1000 + 1
         self.level_canvas.itemconfig("level", text=self.level)
-        self.spawn_time = max(self.initial_spawn_time - (self.level - 1) * 25, 25)
+        self.spawn_time = int(
+            max(
+                self.initial_spawn_time
+                - (self.level - 1) * self.initial_spawn_time * 0.025,
+                self.initial_spawn_time * 0.025,
+            )
+        )
         # self.spawn_time = 10000
 
     def back_to_normal(self):
@@ -495,6 +523,7 @@ class Game:
         elif settings.tetris_mode == "FLIP":
             self.undo_flip()
         self.tetris_mode_label.config(text=settings.tetris_mode)
+        # print("NORMAL")
 
     def gravity_shift(self):
         move_from_to = tetris_picecs.TetrisPieceInterface.gravity_shift()
@@ -508,7 +537,6 @@ class Game:
             self.tetris_grid[transition[0][0]][transition[0][1]].config(bg="#333")
 
         if tetris_picecs.TetrisPieceInterface.is_any_row_clear():
-            self.back_to_normal()
             self.clear_full_rows()
             self.gravity_shift()
         self.event_timer = time()
@@ -523,12 +551,15 @@ class Game:
                 bg=self.tetris_grid[transition[0][0]][transition[0][1]].cget("bg")
             )
             self.tetris_grid[transition[0][0]][transition[0][1]].config(bg="#333")
-        self.clear_full_rows()
+        # self.clear_full_rows()
 
     def double_troble(self):
-        # settings.tetris_mode = "DOUBLE_TROBLE"
+        settings.tetris_mode = "DOUBLE_TROBLE"
         self.root.after(
-            self.spawn_time * 2, self.spawn, (self.last_spawned_col + 5) % 15
+            # self.spawn_time * 2,
+            100,
+            self.spawn,
+            (self.last_spawned_col + 5) % 15,
         )
 
     def phantom_blocks(self):
@@ -558,6 +589,7 @@ class Game:
 
         for block in old_collored_blocks:
             block.config(bg=getattr(block, "old_color", "#333"))
+            block.old_color = None
 
     def flip_one_piece(self, piece_position):
         return [[col, -row - 1] for [row, col] in piece_position]

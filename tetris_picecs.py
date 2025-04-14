@@ -35,10 +35,10 @@ class TetrisPieceInterface:
                 new_poisition = [[row - 1, col] for [row, col] in self.position]
 
         elif dir == "Right":
-            new_poisition = [[row, col + 1] for [row, col] in self.position]  # noqa: E701
+            new_poisition = [[row, col + 1] for [row, col] in self.position]
 
         elif dir == "Left":
-            new_poisition = [[row, col - 1] for [row, col] in self.position]  # noqa: E701
+            new_poisition = [[row, col - 1] for [row, col] in self.position]
 
         return self.valiate_position(new_poisition)
 
@@ -212,11 +212,6 @@ class TetrisPieceInterface:
 
                 all_cleared_rows_indexes.append(row_index)
         return all_cleared_rows_indexes
-
-    @classmethod
-    def back_to_normal(cls):
-        if settings.tetris_mode == "GRAVITY_SHIFT":
-            return cls.undo_gravity_shift()
 
     @classmethod
     def gravity_shift(cls):
